@@ -14,6 +14,10 @@ public class VirtualSwitch {
     List<String> Ports;
     Map<String, String> switchTable = new HashMap<String, String>();
 
+
+    public VirtualSwitch(List<String> Ports){
+        this.Ports = Ports;
+    }
     //Frame arrives at switch and then:
     // 1. The switch uses destination MAC addr in frame header to search table
     //2. if found, forward frame out the associated port 
