@@ -52,7 +52,6 @@ public class VirtualSwitch {
         }
     }
 
-
     public void sendFrame(String Frame, String outPort) throws IOException{
 
         String[] parts = outPort.split(":");
@@ -65,6 +64,7 @@ public class VirtualSwitch {
         InetAddress ip = InetAddress.getByName(ipString);
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, ip, portNumber);    
         sock.send(packet);
+
 
     }
 
