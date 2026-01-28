@@ -50,6 +50,7 @@ public class VirtualSwitch {
             String outPort = switchTable.get(destMAC); 
             sendFrame(Frame, outPort);
         }
+        socket.close();
     }
 
     public void sendFrame(String Frame, String outPort) throws IOException{
@@ -64,7 +65,7 @@ public class VirtualSwitch {
         InetAddress ip = InetAddress.getByName(ipString);
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, ip, portNumber);    
         sock.send(packet);
-
+        sock.close();
 
     }
 
