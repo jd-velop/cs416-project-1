@@ -1,10 +1,10 @@
-package src;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -14,6 +14,47 @@ public class VirtualSwitch {
     List<String> Ports;
     Map<String, String> switchTable = new HashMap<String, String>();
 
+    public static void main(String[] args) {
+        if (args.length != 1) {
+            System.out.println("Usage: java VirtualSwitch <SwitchID>");
+            return;
+        }
+        String switchID = args[0];
+        try {
+            Parser.parse("src/Config.txt");
+            Device myDevice = Parser.devices.get(switchID);
+            if (myDevice == null) {
+                System.out.println("Switch ID " + switchID + " not found in Config.");
+                return;
+            }
+
+            List<String> neighborIDs = Parser.links.get(switchID);
+            List<String> neighborPorts = new ArrayList<>();
+            if (neighborIDs != null) {
+                for (String neighborID : neighborIDs) {
+                    Device neighbor = Parser.devices.get(neighborID);
+                    if (neighbor != null) {
+                        neighborPorts.add(neighbor.ip + ":" + neighbor.port);
+                    }
+                }
+            }
+
+            VirtualSwitch vs = new VirtualSwitch(neighborPorts);
+            System.out.println("Switch " + switchID + " listening on port " + myDevice.port);
+
+            while (true) {
+                try {
+                    vs.receiveFrame(String.valueOf(myDevice.port));
+                } catch (Exception e) {
+                    System.err.println("Error receiving frame: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public VirtualSwitch(List<String> Ports){
         this.Ports = Ports;
