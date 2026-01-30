@@ -1,11 +1,5 @@
-<<<<<<< HEAD
-public class Device {
-    public final String id;
-    public final int port;
-    public final String ip;
-
-    public Device(String id, String ip,int port) {
-=======
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.net.DatagramPacket;
@@ -27,19 +21,20 @@ public class Device {
         ExecutorService es = Executors.newFixedThreadPool(2);
         //needs a way to grab info from config file
         //Then send the info to the multithreading
-        es.submit(new SendPacket(id, ip, port));
+        es.submit(new SendPacket(id, ip, port, es));
         es.submit(new ReceivePacket());
     }
 
+    public static void getIPPort(String id) {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+    }
+
+
     public Device(String id, String ip, int port) {
->>>>>>> a7be542459eb7bc2ce0fd67f71e78814ea4150ff
         this.id = id;
         this.port = port;
         this.ip = ip;
     }
-<<<<<<< HEAD
-}
-=======
 
 
     public static class SendPacket implements Runnable {
@@ -47,17 +42,33 @@ public class Device {
         private String id;
         private String ip;
         private int port;
+        private ExecutorService es;
 
-        public SendPacket(String id, String ip, int port) {
+        public SendPacket(String id, String ip, int port, ExecutorService es) {
             this.id = id;
             this.ip = ip;
             this.port = port;
+            this.es = es;
         }
 
         @Override
         public void run() {
             Scanner scanner = new Scanner(System.in);
-            System.out.print("Enter the Address of the recipient and the message you would\nlike to send (ex: A:HelloWorld!):");
+            while (true) {
+                System.out.print("Enter the Address of the recipient and the message\nyou would like to send (ex: A:HelloWorld!)\nTo quit the device, type 'quit': ");
+                String message = scanner.nextLine();
+                if (message.toLowerCase().equals("quit")) {
+                    System.out.println("\nShutting down device\n");
+                    es.shutdown();
+                    break;
+                } else {
+                    String[] messageArray = message.split(":", 2);
+                    String sendID = messageArray[0];
+                    String sendMessage = messageArray[1];
+                    System.out.println(sendID);
+                    System.out.println(sendMessage);
+                }
+            }
         }
     }
 
@@ -82,5 +93,3 @@ public class Device {
     }
 
 }
-
->>>>>>> a7be542459eb7bc2ce0fd67f71e78814ea4150ff
