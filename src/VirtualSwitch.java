@@ -2,34 +2,28 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
 
 public class VirtualSwitch {
-    List<String> Ports;
-    Map<String, String> switchTable = new HashMap<String, String>();
-
+    private static List<String> Ports;
+    Map<String, String> switchTable = new HashMap<>();
     public static void main(String[] args) {
         if (args.length != 1) {
-            System.out.println("Usage: java VirtualSwitch <SwitchID>");
+            System.out.println("id improperly specified");
             return;
         }
         String switchID = args[0];
-        try {
+        try {   // check that such a switch id exists in config file
             Parser.parse("src/Config.txt");
             Device myDevice = Parser.devices.get(switchID);
             if (myDevice == null) {
-                System.out.println("Switch ID " + switchID + " not found in Config.");
+                System.out.println("Device ID " + switchID + "not found in config file");
                 return;
             }
 
-            List<String> neighborIDs = Parser.links.get(switchID);
-            List<String> neighborPorts = new ArrayList<>();
+            // learn neighbors (IP, port) using parser
+            List<String> neighborIDs = Parser.links.get(switchID); // does this go against the project spec? should the switch know its neighbor IDs off-rip?
+            List<String> neighborPorts = new LinkedList<>();
             if (neighborIDs != null) {
                 for (String neighborID : neighborIDs) {
                     Device neighbor = Parser.devices.get(neighborID);
@@ -38,9 +32,10 @@ public class VirtualSwitch {
                     }
                 }
             }
+            System.out.println("Neighbors: " + neighborPorts); // debug print of connected neighbors
 
             VirtualSwitch vs = new VirtualSwitch(neighborPorts);
-            System.out.println("Switch " + switchID + " listening on port " + myDevice.port);
+            System.out.println("Switch " + switchID + " running on port " + myDevice.port);
 
             while (true) {
                 try {
@@ -50,7 +45,6 @@ public class VirtualSwitch {
                     e.printStackTrace();
                 }
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -60,39 +54,36 @@ public class VirtualSwitch {
         this.Ports = Ports;
     }
     //Frame arrives at switch and then:
-    // 1. The switch uses destination MAC addr in frame header to search table
-    //2. if found, forward frame out the associated port 
-    //3. If not found, flood frame out all ports except the one it arrived on
+    //1. The switch uses destination MAC address in frame header to search table
+    //2. If found, forward frame out the associated port
+    //3. else, flood frame out all ports except the one it arrived on
 
     public void receiveFrame(String Port) throws IOException{
         FrameParser fp = new FrameParser();
         DatagramSocket socket = new DatagramSocket(Integer.parseInt(Port));
-        byte[] buffer = new byte[1500];
-       
+        byte[] buffer = new byte[1500]; // max Ethernet frame size
+
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
         socket.receive(packet);
         String Frame = new String(buffer).trim();
-    
 
+        // Packet will be <sourceMAC>:<destMAC>:<msg>
         List<String> frameParts = fp.parseFrame(Frame);
         String sourceMAC = frameParts.get(0);
         String destMAC = frameParts.get(1);
-        String msg = frameParts.get(2);
-        
-        
 
         boolean sourceInTable = switchTable.containsKey(sourceMAC);
         if (!sourceInTable){
-            //sourceMAC not found, we now learn the correct port
+            // sourceMAC not found, we now learn the correct port
             switchTable.put(sourceMAC, Port);
-            System.out.println(switchTable.toString());
+            System.out.println(switchTable);
         }
-        
+
         boolean destInTable = switchTable.containsKey(destMAC);
         if (!destInTable){
-           flood(Frame, Port);
+            flood(Frame, Port);
         } else {
-            String outPort = switchTable.get(destMAC); 
+            String outPort = switchTable.get(destMAC);
             sendFrame(Frame, outPort);
         }
         socket.close();
@@ -108,7 +99,7 @@ public class VirtualSwitch {
         byte[] buffer = Frame.getBytes();
         DatagramSocket sock = new DatagramSocket(portNumber);
         InetAddress ip = InetAddress.getByName(ipString);
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, ip, portNumber);    
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, ip, portNumber);
         sock.send(packet);
         sock.close();
 
@@ -119,11 +110,10 @@ public class VirtualSwitch {
         outgoingPorts.remove(ignorePort);
         for (String port: outgoingPorts){
             try{
-            sendFrame(Frame, port);
+                sendFrame(Frame, port);
             } catch (Exception e) {
                 System.out.println("Error" + e);
             }
         }
     }
 }
-
