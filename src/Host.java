@@ -1,10 +1,10 @@
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Host {
     public static void main(String[] args) {
@@ -14,7 +14,7 @@ public class Host {
         }
         String hostID = args[0];
         try {
-            Parser.parse("src/Config.txt");
+            Parser.parse("Config.txt");
             Device myDevice = Parser.devices.get(hostID);
             if (myDevice == null) {
                 System.out.println("Device ID " + hostID + " not found in config file");
