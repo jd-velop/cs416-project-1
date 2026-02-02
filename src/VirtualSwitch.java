@@ -5,7 +5,7 @@ import java.net.InetAddress;
 import java.util.*;
 
 public class VirtualSwitch {
-    private static List<String> Ports;
+    private List<String> Ports;
     Map<String, String> switchTable = new HashMap<>();
     public static void main(String[] args) {
         if (args.length != 1) {
