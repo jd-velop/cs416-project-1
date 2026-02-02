@@ -9,9 +9,9 @@ import java.util.concurrent.Executors;
 
 public class Device {
 
-    public static String id;
-    public static int port;
-    public static String ip;
+    public String id;
+    public int port;
+    public String ip;
 
     public static void main(String[] args) throws SocketException {
         id = args[0];
