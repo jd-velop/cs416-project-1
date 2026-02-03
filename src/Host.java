@@ -14,7 +14,7 @@ public class Host {
         }
         String hostID = args[0];
         try {
-            Parser.parse("Config.txt");
+            Parser.parse("src/Config.txt");
             Device myDevice = Parser.devices.get(hostID);
             if (myDevice == null) {
                 System.out.println("Device ID " + hostID + " not found in config file");
