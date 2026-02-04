@@ -32,9 +32,6 @@ public class Host {
             // create thread pool of 2 threads
             ExecutorService es = Executors.newFixedThreadPool(2);
 
-            //Creating socket
-            DatagramSocket hostSocket = new DatagramSocket(myDevice.port);
-
             // Create shared socket bound to host's configured port
             DatagramSocket sharedSocket = new DatagramSocket(myDevice.port);
 
