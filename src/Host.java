@@ -14,7 +14,7 @@ public class Host {
         }
         String hostID = args[0];
         try {
-            Parser.parse("src/Config.txt");
+            Parser.parse("Config.txt");
             Device myDevice = Parser.devices.get(hostID);
             if (myDevice == null) {
                 System.out.println("Device ID " + hostID + " not found in config file");
@@ -30,9 +30,12 @@ public class Host {
             // create thread pool of 2 threads
             ExecutorService es = Executors.newFixedThreadPool(2);
 
+            // Create shared socket bound to host's configured port
+            DatagramSocket sharedSocket = new DatagramSocket(myDevice.port);
+
             // Start send and receive threads
-            es.execute(new SendPacket(myDevice.id, neighbor.ip, neighbor.port, es));
-            es.execute(new ReceivePacket(myDevice.port, es));
+            es.execute(new SendPacket(myDevice.id, neighbor.ip, neighbor.port, es, sharedSocket));
+            es.execute(new ReceivePacket(es, sharedSocket));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -46,12 +49,14 @@ public class Host {
         private String ip;
         private int port;
         private ExecutorService es;
+        private DatagramSocket socket;
 
-        public SendPacket(String id, String ip, int port, ExecutorService es) {
+        public SendPacket(String id, String ip, int port, ExecutorService es, DatagramSocket socket) {
             this.id = id;
             this.ip = ip;
             this.port = port;
             this.es = es;
+            this.socket = socket;
         }
 
         @Override
@@ -72,10 +77,8 @@ public class Host {
 
                     byte[] buffer = (id + ":" + sendID + ":" + sendMessage).getBytes();
                     try {
-                        DatagramSocket socket = new DatagramSocket();
                         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(ip), port);
                         socket.send(packet);
-                        socket.close();
                     } catch (IOException e) {
                         System.err.println("Error sending packet: " + e.getMessage());
                         e.printStackTrace();
@@ -87,26 +90,25 @@ public class Host {
 
     public static class ReceivePacket implements Runnable {
 
-        private int port;
         private ExecutorService es;
+        private DatagramSocket socket;
 
-        public ReceivePacket(int port, ExecutorService es) {
-            this.port = port;
+        public ReceivePacket(ExecutorService es, DatagramSocket socket) {
             this.es = es;
+            this.socket = socket;
         }
 
         @Override
         public void run() {
             try  {
-                DatagramSocket hostSocket = new DatagramSocket(port);
                 byte[] buffer = new byte[1024];
                 while (!es.isShutdown()) { // keep running until quit
                     DatagramPacket dataRequest = new DatagramPacket(buffer, buffer.length);
-                    hostSocket.receive(dataRequest);
+                    socket.receive(dataRequest);
                     String received = new String(dataRequest.getData(), 0, dataRequest.getLength());
                     System.out.println("\nReceived: " + received);
                 }
-                hostSocket.close();
+                socket.close();
             } catch (IOException e) {
                 System.err.println("Error receiving packet: " + e.getMessage());
                 e.printStackTrace();

@@ -69,21 +69,25 @@ public class VirtualSwitch {
         socket.receive(packet);
         String Frame = new String(buffer).trim();
 
+        // Get the sender's address from the packet
+        String senderAddress = packet.getAddress().getHostAddress() + ":" + packet.getPort();
+
         // Packet will be <sourceMAC>:<destMAC>:<msg>
         List<String> frameParts = fp.parseFrame(Frame);
         String sourceMAC = frameParts.get(0);
         String destMAC = frameParts.get(1);
+        System.out.println(frameParts.toString());
 
         boolean sourceInTable = switchTable.containsKey(sourceMAC);
         if (!sourceInTable){
-            // sourceMAC not found, we now learn the correct port
-            switchTable.put(sourceMAC, Port);
+            // sourceMAC not found, we now learn the correct port (sender's address)
+            switchTable.put(sourceMAC, senderAddress);
             System.out.println(switchTable.toString());
         }
 
         boolean destInTable = switchTable.containsKey(destMAC);
         if (!destInTable){
-            flood(Frame, Port);
+            flood(Frame, senderAddress);
             System.out.println("Switch is flooding!");
         } else {
             String outPort = switchTable.get(destMAC);
