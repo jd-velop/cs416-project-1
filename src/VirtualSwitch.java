@@ -39,9 +39,11 @@ public class VirtualSwitch {
             VirtualSwitch vs = new VirtualSwitch(neighborPorts);
             System.out.println("Switch " + switchID + " running on port " + myDevice.port);
 
+            // Create socket once, outside the loop
+            DatagramSocket socket = new DatagramSocket(myDevice.port);
             while (true) {
                 try {
-                    vs.receiveFrame(String.valueOf(myDevice.port));
+                    vs.receiveFrame(socket);
                 } catch (Exception e) {
                     System.err.println("Error receiving frame: " + e.getMessage());
                     e.printStackTrace();
@@ -60,9 +62,8 @@ public class VirtualSwitch {
     //2. If found, forward frame out the associated port
     //3. else, flood frame out all ports except the one it arrived on
 
-    public void receiveFrame(String Port) throws IOException{
+    public void receiveFrame(DatagramSocket socket) throws IOException{
         FrameParser fp = new FrameParser();
-        DatagramSocket socket = new DatagramSocket(Integer.parseInt(Port));
         byte[] buffer = new byte[1500]; // max Ethernet frame size
 
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -95,7 +96,6 @@ public class VirtualSwitch {
             System.out.println(switchTable.toString());
             sendFrame(Frame, outPort);
         }
-        socket.close();
     }
 
     public void sendFrame(String Frame, String outPort) throws IOException{
@@ -106,7 +106,7 @@ public class VirtualSwitch {
 
 
         byte[] buffer = Frame.getBytes();
-        DatagramSocket sock = new DatagramSocket(portNumber);
+        DatagramSocket sock = new DatagramSocket(); // Use any available port for sending
         InetAddress ip = InetAddress.getByName(ipString);
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, ip, portNumber);
         sock.send(packet);
