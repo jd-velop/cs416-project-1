@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,7 +15,8 @@ public class Host {
         }
         String hostID = args[0];
         try {
-            Parser.parse("src/Config.txt");
+            //TODO: Change the file directory between "Config.txt" and "src/Config.txt" if error
+            Parser.parse("Config.txt");
             Device myDevice = Parser.devices.get(hostID);
             if (myDevice == null) {
                 System.out.println("Device ID " + hostID + " not found in config file");
@@ -30,9 +32,12 @@ public class Host {
             // create thread pool of 2 threads
             ExecutorService es = Executors.newFixedThreadPool(2);
 
+            //Creating socket
+            DatagramSocket hostSocket = new DatagramSocket(myDevice.port);
+
             // Start send and receive threads
-            es.execute(new SendPacket(myDevice.id, neighbor.ip, neighbor.port, es));
-            es.execute(new ReceivePacket(myDevice.port, es));
+            es.execute(new SendPacket(myDevice.id, neighbor.ip, neighbor.port, es, hostSocket));
+            es.execute(new ReceivePacket(myDevice.port, es, hostSocket));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -46,12 +51,14 @@ public class Host {
         private String ip;
         private int port;
         private ExecutorService es;
+        private DatagramSocket hostSocket;
 
-        public SendPacket(String id, String ip, int port, ExecutorService es) {
+        public SendPacket(String id, String ip, int port, ExecutorService es, DatagramSocket hostSocket) {
             this.id = id;
             this.ip = ip;
             this.port = port;
             this.es = es;
+            this.hostSocket = hostSocket;
         }
 
         @Override
@@ -63,6 +70,7 @@ public class Host {
                 if (message.trim().toLowerCase().equals("quit")) {
                     System.out.println("\nShutting down device\n");
                     scanner.close();
+                    hostSocket.close();
                     es.shutdownNow(); // signals other thread to stop, too.
                     break;
                 } else {
@@ -89,27 +97,32 @@ public class Host {
 
         private int port;
         private ExecutorService es;
+        private DatagramSocket hostSocket;
 
-        public ReceivePacket(int port, ExecutorService es) {
+        public ReceivePacket(int port, ExecutorService es, DatagramSocket hostSocket) {
             this.port = port;
             this.es = es;
+            this.hostSocket = hostSocket;
         }
 
         @Override
         public void run() {
             try  {
-                DatagramSocket hostSocket = new DatagramSocket(port);
+
                 byte[] buffer = new byte[1024];
                 while (!es.isShutdown()) { // keep running until quit
                     DatagramPacket dataRequest = new DatagramPacket(buffer, buffer.length);
+                    System.out.println("If this prints, then the problem is below");
                     hostSocket.receive(dataRequest);
+                    System.out.println("If this doesn't print, then we are stuck waiting to receive packet");
                     String received = new String(dataRequest.getData(), 0, dataRequest.getLength());
                     System.out.println("\nReceived: " + received);
                 }
-                hostSocket.close();
             } catch (IOException e) {
-                System.err.println("Error receiving packet: " + e.getMessage());
-                e.printStackTrace();
+                System.out.println("Socket closed");
+                //Prints error
+//                System.err.println("Error receiving packet: " + e.getMessage());
+//                e.printStackTrace();
             }
         }
     }
