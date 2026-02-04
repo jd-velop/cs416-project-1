@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,6 +15,7 @@ public class Host {
         }
         String hostID = args[0];
         try {
+            //TODO: Change the file directory between "Config.txt" and "src/Config.txt" if error
             Parser.parse("Config.txt");
             Device myDevice = Parser.devices.get(hostID);
             if (myDevice == null) {
@@ -29,6 +31,9 @@ public class Host {
 
             // create thread pool of 2 threads
             ExecutorService es = Executors.newFixedThreadPool(2);
+
+            //Creating socket
+            DatagramSocket hostSocket = new DatagramSocket(myDevice.port);
 
             // Create shared socket bound to host's configured port
             DatagramSocket sharedSocket = new DatagramSocket(myDevice.port);
@@ -110,8 +115,10 @@ public class Host {
                 }
                 socket.close();
             } catch (IOException e) {
-                System.err.println("Error receiving packet: " + e.getMessage());
-                e.printStackTrace();
+                System.out.println("Socket closed");
+                //Prints error
+//                System.err.println("Error receiving packet: " + e.getMessage());
+//                e.printStackTrace();
             }
         }
     }
