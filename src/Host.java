@@ -35,7 +35,7 @@ public class Host {
 
             // Start send and receive threads
             es.execute(new SendPacket(myDevice.id, neighbor.ip, neighbor.port, es, sharedSocket));
-            es.execute(new ReceivePacket(es, sharedSocket));
+            es.execute(new ReceivePacket(es, hostID, sharedSocket));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -93,11 +93,14 @@ public class Host {
     public static class ReceivePacket implements Runnable {
 
         private ExecutorService es;
+        private String hostID;
         private DatagramSocket socket;
 
-        public ReceivePacket(ExecutorService es, DatagramSocket socket) {
+        public ReceivePacket(ExecutorService es, String hostID, DatagramSocket socket) {
             this.es = es;
+            this.hostID = hostID;
             this.socket = socket;
+
         }
 
         @Override
@@ -111,7 +114,14 @@ public class Host {
                     String[] spliced = received.split(":");
 
                     String senderID = spliced[0];
+                    // String receiverID = spliced[1];
                     String msg = spliced[2];
+
+                    // if the packet is not for me, print "MAC address mismatch" and continue
+                    if (!spliced[1].equalsIgnoreCase(hostID)) {
+                        System.out.println("MAC address mismatch");
+                        continue;
+                    }
 
                     System.out.println("\n  - Message received from Host " + senderID + ": " + msg + "\n");
                 }
