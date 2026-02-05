@@ -74,7 +74,6 @@ public class VirtualSwitch {
         List<String> frameParts = fp.parseFrame(Frame);
         String sourceMAC = frameParts.get(0);
         String destMAC = frameParts.get(1);
-        System.out.println(frameParts.toString());
 
         boolean sourceInTable = switchTable.containsKey(sourceMAC);
         if (!sourceInTable){
