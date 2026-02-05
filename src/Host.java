@@ -15,7 +15,6 @@ public class Host {
         }
         String hostID = args[0];
         try {
-            //TODO: Change the file directory between "Config.txt" and "src/Config.txt" if error
             Parser.parse("Config.txt");
             Device myDevice = Parser.devices.get(hostID);
             if (myDevice == null) {
@@ -70,6 +69,7 @@ public class Host {
                 if (message.trim().toLowerCase().equals("quit")) {
                     System.out.println("\nShutting down device\n");
                     scanner.close();
+                    socket.close();
                     es.shutdownNow(); // signals other thread to stop, too.
                     break;
                 } else {
@@ -110,7 +110,6 @@ public class Host {
                     String received = new String(dataRequest.getData(), 0, dataRequest.getLength());
                     System.out.println("\nReceived: " + received);
                 }
-                socket.close();
             } catch (IOException e) {
                 System.out.println("Socket closed");
                 //Prints error
