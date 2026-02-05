@@ -2,7 +2,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -65,7 +64,7 @@ public class Host {
             Scanner scanner = new Scanner(System.in);
             System.out.println("Welcome, Host " + id);
             while (true) {
-                System.out.print("Enter the Address of the recipient and the message\nyou would like to send (ex: A:HelloWorld!)\nTo quit the device, type 'quit': ");
+                System.out.print("(<recipient id>:<message>) or 'quit' to exit: ");
                 String message = scanner.nextLine();
                 if (message.trim().toLowerCase().equals("quit")) {
                     System.out.println("\nShutting down device\n");
@@ -109,7 +108,12 @@ public class Host {
                     DatagramPacket dataRequest = new DatagramPacket(buffer, buffer.length);
                     socket.receive(dataRequest);
                     String received = new String(dataRequest.getData(), 0, dataRequest.getLength());
-                    System.out.println("\nReceived: " + received);
+                    String[] spliced = received.split(":");
+
+                    String senderID = spliced[0];
+                    String msg = spliced[2];
+
+                    System.out.println("\n  - Message received from Host " + senderID + ": " + msg + "\n");
                 }
             } catch (IOException e) {
                 System.out.println("Socket closed");
