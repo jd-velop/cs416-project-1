@@ -83,7 +83,7 @@ public class VirtualSwitch {
         if (!sourceInTable){
             // sourceMAC not found, we now learn the correct port (sender's address)
             switchTable.put(sourceMAC, senderAddress);
-            System.out.println(switchTable.toString());
+            System.out.println("Learning new addr" + sourceMAC + switchTable.toString());
         }
 
         boolean destInTable = switchTable.containsKey(destMAC);
