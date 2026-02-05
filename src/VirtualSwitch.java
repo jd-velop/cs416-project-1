@@ -115,7 +115,7 @@ public class VirtualSwitch {
     }
 
     public void flood(String Frame, String ignorePort){
-        List<String> outgoingPorts = this.Ports;
+        List<String> outgoingPorts = new ArrayList<>(this.Ports);
         outgoingPorts.remove(ignorePort);
         for (String port: outgoingPorts){
             try{
