@@ -88,17 +88,17 @@ public class VirtualSwitch {
 
         boolean destInTable = switchTable.containsKey(destMAC);
         if (!destInTable){
-            flood(Frame, senderAddress);
+            flood(socket, Frame, senderAddress);
             System.out.println("Switch is flooding!");
         } else {
             String outPort = switchTable.get(destMAC);
             System.out.println("sending to" + outPort);
             System.out.println(switchTable.toString());
-            sendFrame(Frame, outPort);
+            sendFrame(socket, Frame, outPort);
         }
     }
 
-    public void sendFrame(String Frame, String outPort) throws IOException{
+    public void sendFrame(DatagramSocket socket, String Frame, String outPort) throws IOException{
 
         String[] parts = outPort.split(":");
         String ipString = parts[0];
@@ -106,20 +106,18 @@ public class VirtualSwitch {
 
 
         byte[] buffer = Frame.getBytes();
-        DatagramSocket sock = new DatagramSocket(); // Use any available port for sending
         InetAddress ip = InetAddress.getByName(ipString);
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, ip, portNumber);
-        sock.send(packet);
-        sock.close();
+        socket.send(packet);
 
     }
 
-    public void flood(String Frame, String ignorePort){
+    public void flood(DatagramSocket socket, String Frame, String ignorePort){
         List<String> outgoingPorts = new ArrayList<>(this.Ports);
         outgoingPorts.remove(ignorePort);
         for (String port: outgoingPorts){
             try{
-                sendFrame(Frame, port);
+                sendFrame(socket, Frame, port);
             } catch (Exception e) {
                 System.out.println("Error" + e);
             }
