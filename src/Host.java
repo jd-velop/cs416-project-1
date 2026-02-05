@@ -63,6 +63,7 @@ public class Host {
         @Override
         public void run() {
             Scanner scanner = new Scanner(System.in);
+            System.out.println("Welcome, Host " + id);
             while (true) {
                 System.out.print("Enter the Address of the recipient and the message\nyou would like to send (ex: A:HelloWorld!)\nTo quit the device, type 'quit': ");
                 String message = scanner.nextLine();
