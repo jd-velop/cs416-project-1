@@ -23,8 +23,6 @@ public class VirtualSwitch {
 
             // learn neighbors (IP, port) using parser
             List<String> neighborIDs = Parser.links.get(switchID);
-            System.out.println(neighborIDs);
-            // does this go against the project spec? should the switch know its neighbor IDs off-rip?
             List<String> neighborPorts = new LinkedList<>();
             if (neighborIDs != null) {
                 for (String neighborID : neighborIDs) {
@@ -34,7 +32,6 @@ public class VirtualSwitch {
                     }
                 }
             }
-            System.out.println("Neighbors: " + neighborPorts); // debug print of connected neighbors
 
             VirtualSwitch vs = new VirtualSwitch(neighborPorts);
             System.out.println("Switch " + switchID + " running on port " + myDevice.port);
@@ -83,7 +80,7 @@ public class VirtualSwitch {
         if (!sourceInTable){
             // sourceMAC not found, we now learn the correct port (sender's address)
             switchTable.put(sourceMAC, senderAddress);
-            System.out.println("Learning new addr" + sourceMAC + switchTable.toString());
+            System.out.println(switchTable.toString());
         }
 
         boolean destInTable = switchTable.containsKey(destMAC);
@@ -92,8 +89,6 @@ public class VirtualSwitch {
             System.out.println("Switch is flooding!");
         } else {
             String outPort = switchTable.get(destMAC);
-            System.out.println("sending to" + outPort);
-            System.out.println(switchTable.toString());
             sendFrame(socket, Frame, outPort);
         }
     }
