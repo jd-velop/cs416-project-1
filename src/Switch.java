@@ -4,7 +4,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.*;
 
-public class VirtualSwitch {
+public class Switch {
     private List<String> Ports;
     Map<String, String> switchTable = new HashMap<>();
     public static void main(String[] args) {
@@ -33,7 +33,7 @@ public class VirtualSwitch {
                 }
             }
 
-            VirtualSwitch vs = new VirtualSwitch(neighborPorts);
+            Switch vs = new Switch(neighborPorts);
             System.out.println("Switch " + switchID + " running on port " + myDevice.port);
 
             // Create socket once, outside the loop
@@ -51,7 +51,7 @@ public class VirtualSwitch {
         }
     }
 
-    public VirtualSwitch(List<String> Ports){
+    public Switch(List<String> Ports){
         this.Ports = Ports;
     }
     //Frame arrives at switch and then:
