@@ -119,7 +119,7 @@ public class Host {
 
                     // if the packet is not for me, print "MAC address mismatch" and continue
                     if (!spliced[1].equalsIgnoreCase(hostID)) {
-                        System.out.println("MAC address mismatch");
+                        System.out.println("\nMAC address mismatch");
                         continue;
                     }
 
