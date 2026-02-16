@@ -1,4 +1,7 @@
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.util.*;
 
 public class Router {
     public static void main(String[] args) {
@@ -14,14 +17,48 @@ public class Router {
                 System.out.println("Device ID " + routerID + "not found in config file");
                 return;
             }
+
+            // learn neighbors (IP, port) using parser
+            List<String> neighborPorts = new LinkedList<>();
+            List<String> neighborIDs = Parser.links.get(routerID);
+
+            Router r = new Router(neighborPorts);
+            System.out.println("Router " + routerID + " running on port " + myDevice.port);
+
+            DatagramSocket socket = new DatagramSocket(myDevice.port);
+            while (true) {
+                try {
+                    r.receiveFrame(socket);
+                } catch (Exception e) {
+                    System.err.println("Error receiving frame: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
-        // learn neighboring subnets using parser
+    public Router(List<String> Ports){
+        this.Ports = Ports;
+    }
 
+        // i.   Virtual source MAC address
+        // ii.  Virtual destination MAC address
+        // iii. Virtual source IP address
+        // iv.  Virtual destination IP address
+        // v.   Short message
+    public void receiveFrame(DatagramSocket socket) throws IOException {
+        // when receiving a frame, extract the five elements of the virtual frame and print them out
+        FrameParser fp = new FrameParser();
+        byte[] buffer = new byte[1500];
 
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        socket.receive(packet);
         
+
+
+    }
         // when receiving a packet, perform a lookup in the forwarding table and determine the outgoing port
 
         // router table will be hard coded
@@ -37,6 +74,4 @@ public class Router {
         // For example, extract 'R2' from 'net2.R2' and use R2 as the new destination MAC address before sending the virtual frame to R2.
 
         // NOTE: every time a router receives a virtual frame, it should print out all five elements of the frame; every time a router forwards a virtual frame out, it should print out all five elements of the frame as well/
-    }
-    
 }
