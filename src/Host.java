@@ -34,7 +34,7 @@ public class Host {
             DatagramSocket sharedSocket = new DatagramSocket(myDevice.port);
 
             // Start send and receive threads
-            es.execute(new SendPacket(myDevice.id, neighbor.ip, neighbor.port, es, sharedSocket));
+            es.execute(new SendPacket(myDevice.id, neighbor.ip, neighbor.port, myDevice.virtualIps.toString(), myDevice.gateway, es, sharedSocket));
             es.execute(new ReceivePacket(es, hostID, sharedSocket));
 
         } catch (IOException e) {
@@ -48,13 +48,17 @@ public class Host {
         private String id;
         private String ip;
         private int port;
+        private String virtualIp;
+        private String gateway;
         private ExecutorService es;
         private DatagramSocket socket;
 
-        public SendPacket(String id, String ip, int port, ExecutorService es, DatagramSocket socket) {
+        public SendPacket(String id, String ip, int port, String virtualIp, String gateway, ExecutorService es, DatagramSocket socket) {
             this.id = id;
             this.ip = ip;
             this.port = port;
+            this.virtualIp = virtualIp;
+            this.gateway = gateway;
             this.es = es;
             this.socket = socket;
         }
@@ -74,10 +78,11 @@ public class Host {
                     break;
                 } else {
                     String[] messageArray = message.split(":", 2);
-                    String sendID = messageArray[0];
+                    String sendIP = messageArray[0];
                     String sendMessage = messageArray[1];
-
-                    byte[] buffer = (id + ":" + sendID + ":" + sendMessage).getBytes();
+                    // Debug code to check what is being sent
+                    // System.out.println(id + ":" + gateway + ":" + virtualIp + ":" + sendIP + ":" + sendMessage);
+                    byte[] buffer = (id + ":" + gateway + ":" + virtualIp + ":" + sendIP + ":" + sendMessage).getBytes();
                     try {
                         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(ip), port);
                         socket.send(packet);
@@ -113,9 +118,10 @@ public class Host {
                     String received = new String(dataRequest.getData(), 0, dataRequest.getLength());
                     String[] spliced = received.split(":");
 
-                    String senderID = spliced[0];
+                    //I think this is the correct way to grab the message
+                    String senderIp = spliced[2];
                     // String receiverID = spliced[1];
-                    String msg = spliced[2];
+                    String msg = spliced[4];
 
                     // if the packet is not for me, print "MAC address mismatch" and continue
                     if (!spliced[1].equalsIgnoreCase(hostID)) {
@@ -123,7 +129,7 @@ public class Host {
                         continue;
                     }
 
-                    System.out.println("\n  - Message received from Host " + senderID + ": " + msg + "\n");
+                    System.out.println("\n  - Message received from Host " + senderIp + ": " + msg + "\n");
                 }
             } catch (IOException e) {
                 System.out.println("Socket closed");
