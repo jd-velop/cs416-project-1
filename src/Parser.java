@@ -24,13 +24,28 @@ public class Parser {
             }
         }
 
-        //reads the devices
         int i = 0;
         while (i < lines.size() && !lines.get(i).equalsIgnoreCase("Links")){
             String id = lines.get(i++);
             int port = Integer.parseInt(lines.get(i++));
             String ip = lines.get(i++);
             Device device = new Device(id,ip,port);
+
+            //only for host
+            if (id.equals("A")||id.equals("B")||id.equals("C")||id.equals("D")){
+                String virtualIp = lines.get(i++);
+                String gateway = lines.get(i++);
+                device.virtualIps.add(virtualIp);
+                device.gateway = gateway;
+            } //only for routers
+            else if (id.startsWith("R")){
+                String vIp1 = lines.get(i++);
+                String vIp2 = lines.get(i++);
+                device.virtualIps.add(vIp1);
+                device.virtualIps.add(vIp2);
+
+            }
+
             devices.put(id, device);
             links.put(id, new ArrayList<>());
         }
