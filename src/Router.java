@@ -4,6 +4,7 @@ import java.net.DatagramSocket;
 import java.util.*;
 
 public class Router {
+    private List<String> Ports;
     public static void main(String[] args) {
         if (args.length != 1) {
             System.out.println("id improperly specified");
@@ -55,8 +56,14 @@ public class Router {
 
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
         socket.receive(packet);
-        
+        String Frame = new String(buffer).trim();
 
+        String senderAddress = packet.getAddress().getHostAddress() + ":" + packet.getPort();
+        List<String> frameParts = fp.parseFrame(Frame);
+        String sourceMAC = frameParts.get(0);
+        String destMAC = frameParts.get(1);        
+        String sourceIP = frameParts.get(2);
+        String destIP = frameParts.get(3);
 
     }
         // when receiving a packet, perform a lookup in the forwarding table and determine the outgoing port
