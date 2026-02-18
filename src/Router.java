@@ -2,36 +2,60 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.*;
+import java.net.InetAddress;
 
 public class Router {
     private List<String> Ports;
-    private static Map<String, String> forwardingTable = new HashMap<>();
+    private Map<String, String> forwardingTable = new HashMap<>();
+    private Map<String, String> neighborAddresses = new HashMap<>(); // deviceID -> ip:port
+    private String routerID;
+
     public static void main(String[] args) {
-        // check that the router ID is specified
         if (args.length != 1) {
             System.out.println("id improperly specified");
             return;
         }
         String routerID = args[0];
 
-        // initialize the router's forwarding table, hard-coded for now
-        forwardingTable.put("net1", "left port");
-        forwardingTable.put("net2", "right port");
-        forwardingTable.put("net3", "net2.R2");
-
-        try {   // check that such a switch id exists in config file
+        try {
             Parser.parse("Config.txt");
             Device myDevice = Parser.devices.get(routerID);
             if (myDevice == null) {
-                System.out.println("Device ID " + routerID + "not found in config file");
+                System.out.println("Device ID " + routerID + " not found in config file");
                 return;
             }
 
             // learn neighbors (IP, port) using parser
             List<String> neighborPorts = new LinkedList<>();
             List<String> neighborIDs = Parser.links.get(routerID);
+            Map<String, String> neighborAddresses = new HashMap<>();
+            if (neighborIDs != null) {
+                for (String neighborID : neighborIDs) {
+                    Device neighbor = Parser.devices.get(neighborID);
+                    if (neighbor != null) {
+                        String addr = neighbor.ip + ":" + neighbor.port;
+                        neighborPorts.add(addr);
+                        neighborAddresses.put(neighborID, addr);
+                    }
+                }
+            }
 
-            Router r = new Router(neighborPorts);
+            // Hard-coded forwarding table per router
+            // Format: subnet -> neighbor device ID (directly connected) or "subnet.RouterID" (next-hop)
+            Map<String, String> forwardingTable = new HashMap<>();
+            if (routerID.equals("R1")) {
+                forwardingTable.put("net1", "S1");       // directly connected via S1
+                forwardingTable.put("net2", "R2");       // directly connected via R2
+                forwardingTable.put("net3", "net2.R2");  // next-hop is R2
+            } else if (routerID.equals("R2")) {
+                forwardingTable.put("net2", "R1");       // directly connected via R1
+                forwardingTable.put("net3", "S2");       // directly connected via S2
+                forwardingTable.put("net1", "net2.R1");  // next-hop is R1
+            }
+
+            System.out.println("Forwarding table: " + forwardingTable);
+
+            Router r = new Router(routerID, neighborPorts, forwardingTable, neighborAddresses);
             System.out.println("Router " + routerID + " running on port " + myDevice.port);
 
             DatagramSocket socket = new DatagramSocket(myDevice.port);
@@ -48,17 +72,14 @@ public class Router {
         }
     }
 
-    public Router(List<String> Ports){
+    public Router(String routerID, List<String> Ports, Map<String, String> forwardingTable, Map<String, String> neighborAddresses) {
+        this.routerID = routerID;
         this.Ports = Ports;
+        this.forwardingTable = forwardingTable;
+        this.neighborAddresses = neighborAddresses;
     }
 
-        // i.   Virtual source MAC address
-        // ii.  Virtual destination MAC address
-        // iii. Virtual source IP address
-        // iv.  Virtual destination IP address
-        // v.   Short message
     public void receiveFrame(DatagramSocket socket) throws IOException {
-        // when receiving a frame, extract the five elements of the virtual frame and print them out
         FrameParser fp = new FrameParser();
         byte[] buffer = new byte[1500];
 
@@ -75,35 +96,77 @@ public class Router {
         String destinationIP = frameParts.get(3);
         String msg = frameParts.get(4);
 
-
-        // print out the five elements of the frame
+        // print received frame
         System.out.println("Received frame:");
-        System.out.println("Virtual source MAC address: " + sourceMAC);
-        System.out.println("Virtual destination MAC address: " + destMAC);
-        System.out.println("Virtual source IP address: " + sourceIP);
-        System.out.println("Virtual destination IP address: " + destinationIP);
-        System.out.println("Short message: " + msg);
-        
-        
-        String senderAddress = packet.getAddress().getHostAddress() + ":" + packet.getPort();
+        System.out.println("  Source MAC: " + sourceMAC);
+        System.out.println("  Dest MAC: " + destMAC);
+        System.out.println("  Source IP: " + sourceIP);
+        System.out.println("  Dest IP: " + destinationIP);
+        System.out.println("  Message: " + msg);
 
+        // extract subnet prefixes
+        String srcSubnet = sourceIP.split("\\.")[0];
+        String dstSubnet = destinationIP.split("\\.")[0];
 
+        // if source and destination are on the same subnet, drop the frame
+        if (srcSubnet.equals(dstSubnet)) {
+            System.out.println("Same subnet (" + srcSubnet + "), dropping frame.");
+            return;
+        }
+
+        // look up destination subnet in forwarding table
+        String tableEntry = forwardingTable.get(dstSubnet);
+        if (tableEntry == null) {
+            System.out.println("No forwarding table entry for subnet " + dstSubnet + ", dropping frame.");
+            return;
+        }
+
+        // rewrite MAC addresses
+        String newSourceMAC = routerID;
+        String newDestMAC;
+        String exitDeviceID;
+
+        if (tableEntry.contains(".")) {
+            // next-hop entry (e.g. "net2.R2") – extract router ID after the dot
+            exitDeviceID = tableEntry.split("\\.")[1];
+            newDestMAC = exitDeviceID;
+        } else {
+            // directly connected subnet – exit device is a switch/neighbor
+            exitDeviceID = tableEntry;
+            // destination MAC is the final host ID (e.g. "A" from "net1.A")
+            newDestMAC = destinationIP.split("\\.")[1];
+        }
+
+        // rebuild the frame with rewritten MACs
+        String newFrame = newSourceMAC + ":" + newDestMAC + ":" + sourceIP + ":" + destinationIP + ":" + msg;
+
+        // resolve exit device to real ip:port
+        String outAddress = neighborAddresses.get(exitDeviceID);
+        if (outAddress == null) {
+            System.out.println("Cannot resolve address for device " + exitDeviceID + ", dropping frame.");
+            return;
+        }
+
+        // print forwarded frame
+        System.out.println("Forwarding frame:");
+        System.out.println("  Source MAC: " + newSourceMAC);
+        System.out.println("  Dest MAC: " + newDestMAC);
+        System.out.println("  Source IP: " + sourceIP);
+        System.out.println("  Dest IP: " + destinationIP);
+        System.out.println("  Message: " + msg);
+        System.out.println("  Out to: " + outAddress);
+
+        sendFrame(socket, newFrame, outAddress);
     }
-        // when receiving a packet, perform a lookup in the forwarding table and determine the outgoing port
 
-        // if the source and destination subnets are the same, drop the frame
+    public void sendFrame(DatagramSocket socket, String Frame, String outPort) throws IOException {
+        String[] parts = outPort.split(":");
+        String ipString = parts[0];
+        int portNumber = Integer.parseInt(parts[1]);
 
-        // router table will be hard coded
-        // router table contains one entry for each subnet. 
-        // Virtual exit port is specified for a directly connected subnet. 
-        // For a non-directly connected subnet, the next-hop router's virtual IP is specified.
-        // For example, R1's table: 
-        // Subnet prefix:           net1,       net2,       net3
-        // Next-hop or exit port:   left port,  right port, net2.R2
-
-        // re-write the source and destination MAC addresses of the virtual frames.
-        // To determine the new destination MAC address, the router should extract the ID from the next-hop virtual IP listed in the forwarding table.
-        // For example, extract 'R2' from 'net2.R2' and use R2 as the new destination MAC address before sending the virtual frame to R2.
-
-        // NOTE: every time a router receives a virtual frame, it should print out all five elements of the frame; every time a router forwards a virtual frame out, it should print out all five elements of the frame as well/
+        byte[] buffer = Frame.getBytes();
+        InetAddress ip = InetAddress.getByName(ipString);
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, ip, portNumber);
+        socket.send(packet);
+    }
 }
