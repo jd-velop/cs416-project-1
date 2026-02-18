@@ -9,8 +9,10 @@ public class FrameParser {
             String[] spliced = Frame.split(":");
             frameParts.add(spliced[0]);
             frameParts.add(spliced[1]);
+            frameParts.add(spliced[2]);
+            frameParts.add(spliced[3]);
             StringBuilder userMsg = new StringBuilder();
-            for (int i = 2; i < spliced.length; i++){ 
+            for (int i = 4; i < spliced.length; i++){ 
                 userMsg.append(spliced[i]);
             }
             frameParts.add(userMsg.toString());
