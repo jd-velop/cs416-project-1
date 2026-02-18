@@ -4,12 +4,21 @@ import java.net.DatagramSocket;
 import java.util.*;
 
 public class Router {
+    private List<String> Ports;
+    private static Map<String, String> forwardingTable = new HashMap<>();
     public static void main(String[] args) {
+        // check that the router ID is specified
         if (args.length != 1) {
             System.out.println("id improperly specified");
             return;
         }
         String routerID = args[0];
+
+        // initialize the router's forwarding table, hard-coded for now
+        forwardingTable.put("net1", "left port");
+        forwardingTable.put("net2", "right port");
+        forwardingTable.put("net3", "net2.R2");
+
         try {   // check that such a switch id exists in config file
             Parser.parse("Config.txt");
             Device myDevice = Parser.devices.get(routerID);
@@ -55,11 +64,32 @@ public class Router {
 
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
         socket.receive(packet);
+        String Frame = new String(buffer).trim();
+
+        // parse the frame
+        List<String> frameParts = fp.parseFrame(Frame);
+
+        String sourceMAC = frameParts.get(0);
+        String destMAC = frameParts.get(1);
+        String sourceIP = frameParts.get(2);
+        String destinationIP = frameParts.get(3);
+        String msg = frameParts.get(4);
+
+        // print out the five elements of the frame
+        System.out.println("Received frame:");
+        System.out.println("Virtual source MAC address: " + sourceMAC);
+        System.out.println("Virtual destination MAC address: " + destMAC);
+        System.out.println("Virtual source IP address: " + sourceIP);
+        System.out.println("Virtual destination IP address: " + destinationIP);
+        System.out.println("Short message: " + msg);
+        
         
 
 
     }
         // when receiving a packet, perform a lookup in the forwarding table and determine the outgoing port
+
+        // if the source and destination subnets are the same, drop the frame
 
         // router table will be hard coded
         // router table contains one entry for each subnet. 
