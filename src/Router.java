@@ -75,6 +75,7 @@ public class Router {
         String destinationIP = frameParts.get(3);
         String msg = frameParts.get(4);
 
+
         // print out the five elements of the frame
         System.out.println("Received frame:");
         System.out.println("Virtual source MAC address: " + sourceMAC);
@@ -84,6 +85,7 @@ public class Router {
         System.out.println("Short message: " + msg);
         
         
+        String senderAddress = packet.getAddress().getHostAddress() + ":" + packet.getPort();
 
 
     }
