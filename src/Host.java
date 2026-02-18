@@ -14,7 +14,7 @@ public class Host {
         }
         String hostID = args[0];
         try {
-            Parser.parse("Config.txt");
+            Parser.parse("src/Config.txt");
             Device myDevice = Parser.devices.get(hostID);
             if (myDevice == null) {
                 System.out.println("Device ID " + hostID + " not found in config file");
@@ -78,11 +78,24 @@ public class Host {
                     break;
                 } else {
                     String[] messageArray = message.split(":", 2);
-                    String sendIP = messageArray[0];
+                    String destinationIP = messageArray[0];
                     String sendMessage = messageArray[1];
+                    String sourceMac = id;
+                    String sourceIP = virtualIp.substring(1,virtualIp.length()-1);
+                    String destinationMac = "";
+
+                    //Check if destination is in the same subnet using message split
+                    String[] destinationSubnet = destinationIP.split("\\.", 2);
+                    String[] sourceSubnet = sourceIP.split("\\.", 2);
+                    if (sourceSubnet[0].equals(destinationSubnet[0])){
+                        destinationMac = destinationIP.substring(5);
+                    } else {
+                        destinationMac = gateway.substring(5);
+                    }
+
                     // Debug code to check what is being sent
-                    // System.out.println(id + ":" + gateway + ":" + virtualIp + ":" + sendIP + ":" + sendMessage);
-                    byte[] buffer = (id + ":" + gateway + ":" + virtualIp + ":" + sendIP + ":" + sendMessage).getBytes();
+                    //System.out.println(sourceMac + ":" + destinationMac + ":" + sourceIP + ":" + destinationIP + ":" + sendMessage);
+                    byte[] buffer = (sourceMac + ":" + destinationMac + ":" + sourceIP + ":" + destinationIP + ":" + sendMessage).getBytes();
                     try {
                         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(ip), port);
                         socket.send(packet);
