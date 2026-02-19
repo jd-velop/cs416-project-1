@@ -97,7 +97,7 @@ public class Router {
         String msg = frameParts.get(4);
 
         // print incoming frame
-        System.out.println("Received frame:");
+        System.out.println("\nReceived frame:");
         System.out.println("  Source MAC: " + sourceMAC);
         System.out.println("  Dest MAC: " + destMAC);
         System.out.println("  Source IP: " + sourceIP);
