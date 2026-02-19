@@ -1,8 +1,8 @@
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.util.*;
 import java.net.InetAddress;
+import java.util.*;
 
 public class Router {
     private List<String> Ports;
@@ -96,7 +96,7 @@ public class Router {
         String destinationIP = frameParts.get(3);
         String msg = frameParts.get(4);
 
-        // print received frame
+        // print incoming frame
         System.out.println("Received frame:");
         System.out.println("  Source MAC: " + sourceMAC);
         System.out.println("  Dest MAC: " + destMAC);
@@ -147,7 +147,7 @@ public class Router {
             return;
         }
 
-        // print forwarded frame
+        // print outgoing frame
         System.out.println("Forwarding frame:");
         System.out.println("  Source MAC: " + newSourceMAC);
         System.out.println("  Dest MAC: " + newDestMAC);
