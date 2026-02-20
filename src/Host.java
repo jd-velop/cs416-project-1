@@ -143,7 +143,7 @@ public class Host {
                         continue;
                     }
 
-                    System.out.println("\n  - Message received from Host " + senderIp + ": " + msg + "\n");
+                    System.out.println("\n  - " + senderIp + ": " + msg + "\n");
                     System.out.print("(<recipient id>:<message>) or 'quit' to exit: ");
                 }
             } catch (IOException e) {
