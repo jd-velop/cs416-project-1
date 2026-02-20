@@ -138,11 +138,13 @@ public class Host {
 
                     // if the packet is not for me, print "MAC address mismatch" and continue
                     if (!spliced[1].equalsIgnoreCase(hostID)) {
-                        System.out.println("\nMAC address mismatch");
+                        System.out.println("\nMAC address mismatch\n");
+                        System.out.print("(<recipient id>:<message>) or 'quit' to exit: ");
                         continue;
                     }
 
                     System.out.println("\n  - Message received from Host " + senderIp + ": " + msg + "\n");
+                    System.out.print("(<recipient id>:<message>) or 'quit' to exit: ");
                 }
             } catch (IOException e) {
                 System.out.println("Socket closed");
