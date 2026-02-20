@@ -68,7 +68,7 @@ public class Host {
             Scanner scanner = new Scanner(System.in);
             System.out.println("Welcome, Host " + id);
             while (true) {
-                System.out.print("(<recipient id>:<message>) or 'quit' to exit: ");
+                System.out.print("(<dest. ip>:<message>) or 'quit' to exit: ");
                 String message = scanner.nextLine();
                 if (message.trim().toLowerCase().equals("quit")) {
                     System.out.println("\nShutting down device\n");
@@ -139,12 +139,12 @@ public class Host {
                     // if the packet is not for me, print "MAC address mismatch" and continue
                     if (!spliced[1].equalsIgnoreCase(hostID)) {
                         System.out.println("\nMAC address mismatch\n");
-                        System.out.print("(<recipient id>:<message>) or 'quit' to exit: ");
+                        System.out.print("(<dest. ip>:<message>) or 'quit' to exit: ");
                         continue;
                     }
 
                     System.out.println("\n  - " + senderIp + ": " + msg + "\n");
-                    System.out.print("(<recipient id>:<message>) or 'quit' to exit: ");
+                    System.out.print("(<dest. ip>:<message>) or 'quit' to exit: ");
                 }
             } catch (IOException e) {
                 System.out.println("Socket closed");
