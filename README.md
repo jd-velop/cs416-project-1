@@ -14,11 +14,27 @@ Writing code for Switch
 
 Writing config file and parser
 
+---
+
 ## Attendance
 
 ### 2/16
 
 Santos absent from class
+
+### 2/18
+
+Everyone present
+
+### 2/19
+
+Out of class meeting: Everyone present. Demo completed during meeting
+
+### 2/20
+
+Ryan absent from class
+
+---
 
 ## IP Addresses
 

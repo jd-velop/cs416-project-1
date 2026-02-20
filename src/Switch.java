@@ -51,7 +51,7 @@ public class Switch {
         }
     }
 
-    public Switch(List<String> Ports){
+    public Switch(List<String> Ports) {
         this.Ports = Ports;
     }
     //Frame arrives at switch and then:
